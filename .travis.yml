@@ -7,8 +7,12 @@ php:
   - 7
   - hhvm
 
+before_install:
+  pecl install -f memcached-2.1.0
+
 install:
   - travis_retry composer install --no-interaction --prefer-source
 
 script:
   - phpunit --verbose
+
