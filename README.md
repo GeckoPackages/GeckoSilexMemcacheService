@@ -15,7 +15,7 @@ The package can be installed using [ Composer ](https://getcomposer.org/).
 Add the package to your `composer.json`.
 
 ```
-"require-dev": {
+"require": {
     "gecko-packages/gecko-silex-caching-service" : "1.*"
 }
 ```
