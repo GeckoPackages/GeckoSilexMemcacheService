@@ -155,7 +155,7 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessage Cannot find class "\Foo\Bar" to use as cache client.
+     * @expectedExceptionMessageRegExp #^Cannot find class "\\Foo\\Bar" to use as cache client.$#
      */
     public function testExceptionMissingCustomClient()
     {
