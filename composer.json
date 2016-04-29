@@ -6,7 +6,7 @@
   "license": "MIT",
   "keywords" : ["Silex", "Memcache", "Memcached"],
   "require": {
-    "php": ">=5.4.0",
+    "php": "^5.4 || ^7.0",
     "silex/silex": "~1.1"
   },
   "require-dev": {
