@@ -7,7 +7,7 @@ For debugging and profiling usages it can be used with a logger.
 
 ### Requirements
 
-PHP 5.3.0
+PHP 5.4.0
 
 ### Install
 
