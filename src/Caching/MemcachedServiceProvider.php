@@ -15,8 +15,8 @@ use GeckoPackages\MemcacheMock\MemcachedLogger;
 use GeckoPackages\MemcacheMock\MemcachedMock;
 use GeckoPackages\Silex\Services\Caching\Clients\Memcached;
 use GeckoPackages\Silex\Services\Caching\Clients\MemcachedLogging;
-use Silex\Application;
-use Silex\ServiceProviderInterface;
+use Pimple\Container;
+use Pimple\ServiceProviderInterface;
 
 /**
  * Service for using Memcache.
@@ -43,68 +43,58 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
     /**
      * {@inheritdoc}
      */
-    public function boot(Application $app)
-    {
-        //
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function register(Application $app)
+    public function register(Container $app)
     {
         $name = $this->name;
-        $app[$name] = $app->share(
-            function (Application $app) use ($name) {
-                $memcache = isset($app[$name.'.client']) ? $app[$name.'.client'] : 'memcached';
-                switch ($memcache) {
-                    case 'memcached':
-                        if (!class_exists('Memcached')) {
-                            throw new \RuntimeException('Cannot find class "Memcached".');
-                        }
-
-                        if (empty($app['logger'])) {
-                            $memcache = new Memcached();
-                        } else {
-                            $memcache = new MemcachedLogging();
-                            $memcache->setLogger(new MemcachedLogger($app['logger'], isset($app['stopwatch']) ? $app['stopwatch'] : null));
-                        }
-
-                        break;
-                    case 'mock':
-                        $memcache = new MemcachedMock();
-                        if (!empty($app['logger'])) {
-                            $memcache->setLogger(new MemcachedLogger($app['logger'], isset($app['stopwatch']) ? $app['stopwatch'] : null));
-                        }
-
-                        break;
-                    default:
-                        if (!class_exists($memcache)) {
-                            throw new \UnexpectedValueException(sprintf('Cannot find class "%s" to use as cache client.', $memcache));
-                        }
-
-                        $memcache = new $memcache();
-                        break;
-                }
-
-                if (isset($app[$name.'.servers'])) {
-                    foreach ($app[$name.'.servers'] as $server) {
-                        if (count($server) === 1) {
-                            $server[1] = 11211; // use default port
-                        }
-
-                        $memcache->addServer($server[0], (int) $server[1]);
+        $app[$name] = function ($app) use($name) {
+            $memcache = isset($app[$name.'.client']) ? $app[$name.'.client'] : 'memcached';
+            switch ($memcache) {
+                case 'memcached':
+                    if (!class_exists('Memcached')) {
+                        throw new \RuntimeException('Cannot find class "Memcached".');
                     }
-                } else {
-                    $memcache->addServer('127.0.0.1', 11211);
-                }
 
-                if (isset($app[$name.'.prefix']) && method_exists($memcache, 'setPrefix')) {
-                    $memcache->setPrefix($app[$name.'.prefix']);
-                }
+                    if (empty($app['logger'])) {
+                        $memcache = new Memcached();
+                    } else {
+                        $memcache = new MemcachedLogging();
+                        $memcache->setLogger(new MemcachedLogger($app['logger'], isset($app['stopwatch']) ? $app['stopwatch'] : null));
+                    }
 
-                return $memcache;
+                    break;
+                case 'mock':
+                    $memcache = new MemcachedMock();
+                    if (!empty($app['logger'])) {
+                        $memcache->setLogger(new MemcachedLogger($app['logger'], isset($app['stopwatch']) ? $app['stopwatch'] : null));
+                    }
+
+                    break;
+                default:
+                    if (!class_exists($memcache)) {
+                        throw new \UnexpectedValueException(sprintf('Cannot find class "%s" to use as cache client.', $memcache));
+                    }
+
+                    $memcache = new $memcache();
+                    break;
             }
-        );
+
+            if (isset($app[$name.'.servers'])) {
+                    foreach ($app[$name.'.servers'] as $server) {
+                    if (count($server) === 1) {
+                        $server[1] = 11211; // use default port
+                    }
+
+                    $memcache->addServer($server[0], (int) $server[1]);
+                }
+            } else {
+                $memcache->addServer('127.0.0.1', 11211);
+            }
+
+            if (isset($app[$name.'.prefix']) && method_exists($memcache, 'setPrefix')) {
+                $memcache->setPrefix($app[$name.'.prefix']);
+            }
+
+            return $memcache;
+        };
     }
 }
