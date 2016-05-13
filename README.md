@@ -78,6 +78,21 @@ $logger = $app['memcache']->getLogger();
 // returns '$myPSR3Logger'
 $logger->getLogger();
 ```
+## Custom name registering / multiple services
+
+You can register the service using a name other than the default name `memcache`.
+The same method can be used to register multiple services on your application.
+Pass the name at the constructor of the service and use the same name as prefix for the configuration.
+For example:
+
+```php
+
+$app->register(new MemcachedServiceProvider('memcached'), array('memcached.prefix' => $prefix));
+
+// usage
+$app['memcached']->get('foo');
+
+```
 
 ### License
 
