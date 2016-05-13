@@ -12,9 +12,9 @@
 namespace GeckoPackages\Silex\Services\Caching;
 
 use GeckoPackages\MemcacheMock\MemcachedLogger;
+use GeckoPackages\MemcacheMock\MemcachedMock;
 use GeckoPackages\Silex\Services\Caching\Clients\Memcached;
 use GeckoPackages\Silex\Services\Caching\Clients\MemcachedLogging;
-use GeckoPackages\Silex\Services\Caching\Clients\MemcachedMock;
 use Silex\Application;
 use Silex\ServiceProviderInterface;
 
