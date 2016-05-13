@@ -28,6 +28,19 @@ use Silex\ServiceProviderInterface;
 final class MemcachedServiceProvider implements ServiceProviderInterface
 {
     /**
+     * @var string
+     */
+    private $name;
+
+    /**
+     * @param string $name
+     */
+    public function __construct($name = 'memcache')
+    {
+        $this->name = $name;
+    }
+
+    /**
      * {@inheritdoc}
      */
     public function boot(Application $app)
@@ -40,9 +53,10 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
      */
     public function register(Application $app)
     {
-        $app['memcache'] = $app->share(
-            function () use ($app) {
-                $memcache = isset($app['memcache.client']) ? $app['memcache.client'] : 'memcached';
+        $name = $this->name;
+        $app[$name] = $app->share(
+            function (Application $app) use ($name) {
+                $memcache = isset($app[$name.'.client']) ? $app[$name.'.client'] : 'memcached';
                 switch ($memcache) {
                     case 'memcached':
                         if (!class_exists('Memcached')) {
@@ -73,8 +87,8 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                         break;
                 }
 
-                if (isset($app['memcache.servers'])) {
-                    foreach ($app['memcache.servers'] as $server) {
+                if (isset($app[$name.'.servers'])) {
+                    foreach ($app[$name.'.servers'] as $server) {
                         if (count($server) === 1) {
                             $server[1] = 11211; // use default port
                         }
@@ -85,8 +99,8 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                     $memcache->addServer('127.0.0.1', 11211);
                 }
 
-                if (isset($app['memcache.prefix'])) {
-                    $memcache->setPrefix($app['memcache.prefix']);
+                if (isset($app[$name.'.prefix'])) {
+                    $memcache->setPrefix($app[$name.'.prefix']);
                 }
 
                 return $memcache;

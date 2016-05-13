@@ -164,6 +164,18 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app['memcache']->getServerList();
     }
 
+    public function testServiceName()
+    {
+        $name = 'memcached';
+        $app = new Application();
+        $service = new MemcachedServiceProvider($name);
+        $app->register($service, array($name.'.client' => 'mock'));
+
+        $this->assertTrue(isset($app[$name]));
+        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app[$name]);
+        $this->assertFalse(isset($app['memcache']));
+    }
+
     private function runCacheTest(Application $app, $prefix)
     {
         $prefixReadBack = $app['memcache']->getOption(\Memcached::OPT_PREFIX_KEY);
