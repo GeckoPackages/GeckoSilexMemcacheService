@@ -10,7 +10,7 @@
     "silex/silex": "~1.1"
   },
   "require-dev": {
-    "gecko-packages/gecko-memcache-mock" : "1.0"
+    "gecko-packages/gecko-memcache-mock" : "^2.0"
   },
   "autoload": {
     "psr-4": {

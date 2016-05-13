@@ -164,6 +164,37 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app['memcache']->getServerList();
     }
 
+    public function testServiceName()
+    {
+        $app = new Application();
+
+        $name1 = 'memcached';
+        $prefix1 = 'prefix1';
+        $service1 = new MemcachedServiceProvider($name1);
+        $app->register($service1, array($name1.'.client' => 'mock', $name1.'.prefix' => $prefix1));
+
+        $name2 = 'cache';
+        $prefix2 = 'prefix2';
+        $service2 = new MemcachedServiceProvider($name2);
+        $app->register($service2, array($name2.'.client' => 'mock', $name2.'.prefix' => $prefix2));
+
+        $this->assertFalse(isset($app['memcache']));
+
+        $this->assertTrue(isset($app[$name1]));
+        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app[$name1]);
+
+        $this->assertTrue(isset($app[$name2]));
+        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app[$name2]);
+
+        $app[$name1]->set('foo', 'bar');
+
+        $this->assertSame('bar', $app[$name1]->get('foo'));
+        $this->assertFalse($app[$name2]->get('foo'));
+
+        $this->assertSame($prefix1, $app[$name1]->getPrefix());
+        $this->assertSame($prefix2, $app[$name2]->getPrefix());
+    }
+
     private function runCacheTest(Application $app, $prefix)
     {
         $prefixReadBack = $app['memcache']->getOption(\Memcached::OPT_PREFIX_KEY);
