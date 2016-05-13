@@ -88,9 +88,11 @@ For example:
 ```php
 
 $app->register(new MemcachedServiceProvider('memcached'), array('memcached.prefix' => $prefix));
+$app->register(new MemcachedServiceProvider('cache2'), array('cache2.prefix' => $prefix));
 
 // usage
 $app['memcached']->get('foo');
+$app['cache2']->get('bar');
 
 ```
 
