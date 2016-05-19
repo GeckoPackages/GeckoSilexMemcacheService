@@ -4,6 +4,7 @@
 
 A service provider for using `memcache` with [ Silex ](http://silex.sensiolabs.org) and the [ Memcached ](https://secure.php.net/manual/en/book.memcached.php) extension.
 For debugging and profiling usages it can be used with a logger.
+For Silex 1.x please see the 1.0 branche.
 
 ### Requirements
 
