@@ -4,10 +4,11 @@
 
 A service provider for using `memcache` with [ Silex ](http://silex.sensiolabs.org) and the [ Memcached ](https://secure.php.net/manual/en/book.memcached.php) extension.
 For debugging and profiling usages it can be used with a logger.
+For Silex 1.x please see the 1.0 branch.
 
 ### Requirements
 
-PHP 5.5.0
+PHP 5.5.9 (PHP7 supported)
 
 ### Install
 
@@ -16,23 +17,23 @@ Add the package to your `composer.json`.
 
 ```
 "require": {
-    "gecko-packages/gecko-silex-caching-service" : "1.*"
+    "gecko-packages/gecko-silex-caching-service" : "^3.*"
 }
 ```
+
+Note: use the `^1.*` line for Silex `1.*`.
 
 ## Example
 
 ```php
 // register
-$settings =
-    array(
+$settings = [
         'memcache.prefix' => $prefix,
-        'memcache.servers' =>
-        array(
-            array('127.0.0.1', 11212),
-            array('127.0.0.2'),
-        )
-);
+        'memcache.servers' => [
+            ['127.0.0.1', 11212],
+            ['127.0.0.2'],
+        ]
+];
 $app->register(new MemcachedServiceProvider(), $settings);
 
 // use
@@ -64,13 +65,18 @@ The service takes the following options:
 
    When omitted one server at `127.0.0.1:11211` will be configured.
 
+* `memcache.enable_log`
+   Enables logging of calls to the service, see below for details.
+
 ### Logger sample
 
-When using the `memcached` or `mock` class and have a logger (`$app['logger']`) set a logger will be added to the Memcache service.
+Logging calls to the service can be done when a [PSR3](https://github.com/php-fig/log/blob/master/Psr/Log/LoggerInterface.php) logger is set on the container (`$app['logger']`). 
+Enable logging by passing the `memcache.enable_log` configuration option.
+
 Example:
 ```php
 $app['logger'] = $myPSR3Logger;
-$app->register(new MemcachedServiceProvider(), $settings);
+$app->register(new MemcachedServiceProvider(), ['memcache.enable_log' => true]);
 
 /** @var GeckoPackages\MemcacheMock\MemcachedLogger $logger */
 $logger = $app['memcache']->getLogger();
@@ -78,6 +84,10 @@ $logger = $app['memcache']->getLogger();
 // returns '$myPSR3Logger'
 $logger->getLogger();
 ```
+Note:
+Because internally the `memcache` client is wrapped its public methods are still available. 
+However calls like `method_exists` might fail. To get the original client that is in use call `getOriginalClient` on the proxy client.
+
 ## Custom name registering / multiple services
 
 You can register the service using a name other than the default name `memcache`.
@@ -87,8 +97,8 @@ For example:
 
 ```php
 
-$app->register(new MemcachedServiceProvider('memcached'), array('memcached.prefix' => $prefix));
-$app->register(new MemcachedServiceProvider('cache2'), array('cache2.prefix' => $prefix));
+$app->register(new MemcachedServiceProvider('memcached'), ['memcached.prefix' => $prefix]);
+$app->register(new MemcachedServiceProvider('cache2'), ['cache2.prefix' => $prefix]);
 
 // usage
 $app['memcached']->get('foo');
