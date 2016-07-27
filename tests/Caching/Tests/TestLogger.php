@@ -14,14 +14,13 @@ use Psr\Log\LoggerInterface;
 /**
  * Test logger for unit testing.
  *
- * @author SpacePossum
- *
  * @internal
+ *
+ * @author SpacePossum
  */
 final class TestLogger implements LoggerInterface
 {
-    private $debugLog = array();
-    private $errorLog = array();
+    private $debugLog = [];
 
     /**
      * @return array<array<string, array<string, mixed>>>
@@ -31,76 +30,73 @@ final class TestLogger implements LoggerInterface
         return $this->debugLog;
     }
 
-    /**
-     * @return array<array<string, array<string, mixed>>>
-     */
-    public function getErrorLog()
+    public function resetDebugLog()
     {
-        return $this->errorLog;
+        $this->debugLog = [];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function debug($message, array $context = array())
+    public function debug($message, array $context = [])
     {
-        $this->debugLog[] = array($message, $context);
+        $this->debugLog[] = [$message, $context];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function error($message, array $context = array())
+    public function error($message, array $context = [])
     {
-        $this->errorLog[] = array($message, $context);
+        $this->errorLog[] = [$message, $context];
     }
 
     /**
      * {@inheritdoc}
      */
-    public function emergency($message, array $context = array())
+    public function emergency($message, array $context = [])
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function alert($message, array $context = array())
+    public function alert($message, array $context = [])
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function critical($message, array $context = array())
+    public function critical($message, array $context = [])
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function warning($message, array $context = array())
+    public function warning($message, array $context = [])
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function notice($message, array $context = array())
+    public function notice($message, array $context = [])
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function info($message, array $context = array())
+    public function info($message, array $context = [])
     {
     }
 
     /**
      * {@inheritdoc}
      */
-    public function log($level, $message, array $context = array())
+    public function log($level, $message, array $context = [])
     {
     }
 }

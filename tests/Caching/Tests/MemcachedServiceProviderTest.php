@@ -9,28 +9,19 @@
  * with this source code in the file LICENSE.
  */
 
+use GeckoPackages\MemcacheMock\MemcachedMock;
+use GeckoPackages\Silex\Services\Caching\Clients\Memcached;
+use GeckoPackages\Silex\Services\Caching\Clients\MemcacheLoggingProxy;
 use GeckoPackages\Silex\Services\Caching\MemcachedServiceProvider;
 use Silex\Application;
 
 /**
- * @author SpacePossum
- *
  * @internal
+ *
+ * @author SpacePossum
  */
 final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
 {
-    /**
-     * @requires extension memcached
-     */
-    public function testNoLoggerAtDefault()
-    {
-        $app = new Application();
-        $app['logger'] = false;
-        $app->register(new MemcachedServiceProvider());
-        $this->assertInstanceof('GeckoPackages\Silex\Services\Caching\Clients\Memcached', $app['memcache']);
-        $this->assertSame('', $app['memcache']->getPrefix());
-    }
-
     /**
      * @requires extension memcached
      */
@@ -40,42 +31,42 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app = new Application();
         $app['debug'] = true;
         $app['logger'] = new TestLogger();
-        $app->register(
-            new MemcachedServiceProvider(),
-            array(
-                'memcache.prefix' => $name,
-            )
-        );
+        $app->register(new MemcachedServiceProvider(), ['memcache.prefix' => $name, 'memcache.enable_log' => true]);
 
-        /** @var GeckoPackages\MemcacheMock\MemcachedLogger $logger */
+        /** @var TestLogger $logger */
         $logger = $app['memcache']->getLogger();
-        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedLogger', $logger);
+        $this->assertInstanceOf(Psr\Log\LoggerInterface::class, $logger);
 
         /** @var array $calls */
-        $calls = $logger->getLogger()->getDebugLog();
+        $calls = $logger->getDebugLog();
+
         $this->assertInternalType('array', $calls);
-        $this->assertCount(2, $calls);
+        $this->assertCount(4, $calls);
 
-        $this->assertSame('addServer', $calls[0][0]);
+        $this->assertSame('> addServer', $calls[0][0]);
+
         $this->assertSame(
-            array(
-                'host' => '127.0.0.1',
-                'port' => 11211,
-                'weight' => 0,
-            ),
-            $calls[0][1]
+            ['127.0.0.1', 11211],
+            array_slice($calls[0][1], 0, 2, true)
         );
 
-        $this->assertSame('setOption', $calls[1][0]);
-        $this->assertSame(
-            array(
-                'option' => Memcached::OPT_PREFIX_KEY,
-                'value' => $name,
-            ),
-            $calls[1][1]
-        );
+        $this->assertSame('< addServer', $calls[1][0]);
+        $this->assertTrue($calls[1][1][0]);
+
+        $this->assertSame('> setPrefix', $calls[2][0]);
+        $this->assertSame([$name], $calls[2][1]);
+
+        $logger->resetDebugLog();
 
         $prefix = $app['memcache']->getOption(\Memcached::OPT_PREFIX_KEY);
+
+        $calls = $logger->getDebugLog();
+        $this->assertCount(2, $calls);
+        $this->assertSame('> getOption', $calls[0][0]);
+        $this->assertSame([\Memcached::OPT_PREFIX_KEY], $calls[0][1]);
+        $this->assertSame('< getOption', $calls[1][0]);
+        $this->assertSame([$name], $calls[1][1]);
+
         $this->assertSame($name, $prefix);
         $this->assertSame($name, $app['memcache']->getPrefix());
         $servers = $app['memcache']->getServerList();
@@ -98,14 +89,14 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app['name'] = 'UnitTest';
         $app->register(
             new MemcachedServiceProvider(),
-            array(
+            [
                 'memcache.prefix' => $prefix,
-                'memcache.servers' => array(
-                    array('127.0.0.2', 11212),
-                    array('127.0.0.3', '11213'),
-                    array('127.0.0.4'),
-                ),
-            )
+                'memcache.servers' => [
+                    ['127.0.0.2', 11212],
+                    ['127.0.0.3', '11213'],
+                    ['127.0.0.4'],
+                ],
+            ]
         );
         $this->runCacheTest($app, $prefix);
     }
@@ -121,26 +112,70 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app->register(new MemcachedServiceProvider());
         $app['memcache.prefix'] = $prefix;
         $app['memcache.servers'] =
-            array(
-                array('127.0.0.2', 11212),
-                array('127.0.0.3', '11213'),
-                array('127.0.0.4'),
-            );
+            [
+                ['127.0.0.2', 11212],
+                ['127.0.0.3', '11213'],
+                ['127.0.0.4'],
+            ];
         $this->runCacheTest($app, $prefix);
     }
 
     public function testCustomClient()
     {
         $app = new Application();
-        $app->register(new MemcachedServiceProvider(), array('memcache.client' => 'CustomCacheClientTestClass'));
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => 'TestCustomCacheClient']);
+        $this->assertInstanceOf(TestCustomCacheClient::class, $app['memcache']);
         $app['memcache']->addServer();
+        $this->assertSame(2, $app['memcache']->getAddServerCallCount());
+    }
+
+    /**
+     * @param bool  $expected
+     * @param array $configuration
+     *
+     * @requires extension memcached
+     * @dataProvider provideLoggerByConfiguration
+     */
+    public function testLoggerByConfiguration($expected, array $configuration)
+    {
+        $logger = new TestLogger();
+        $app = new Application();
+        $app['logger'] = $logger;
+        $app->register(new MemcachedServiceProvider(), $configuration);
+        if ($expected) {
+            $this->assertInstanceOf(MemcacheLoggingProxy::class, $app['memcache']);
+            $this->assertInstanceOf(MemcachedMock::class, $app['memcache']->getOriginalClient());
+        } else {
+            $this->assertInstanceOf(MemcachedMock::class, $app['memcache']);
+            $this->assertNull($app['memcache']->getLogger());
+        }
+    }
+
+    public function provideLoggerByConfiguration()
+    {
+        return [
+            [false, ['memcache.client' => 'mock']],
+            [true, ['memcache.client' => 'mock', 'memcache.enable_log' => false]],
+            [true, ['memcache.client' => 'mock', 'memcache.enable_log' => true]],
+        ];
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot find class "\\Foo\\Bar" to use as memcache client.$#
+     */
+    public function testExceptionMissingCustomClient()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => '\Foo\Bar']);
+        $app['memcache']->getServerList();
     }
 
     public function testMockClient()
     {
         $app = new Application();
-        $app->register(new MemcachedServiceProvider(), array('memcache.client' => 'mock'));
-        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app['memcache']);
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => 'mock']);
+        $this->assertInstanceOf(MemcachedMock::class, $app['memcache']);
     }
 
     public function testMockWithLoggerClient()
@@ -148,20 +183,33 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $logger = new TestLogger();
         $app = new Application();
         $app['logger'] = $logger;
-        $app->register(new MemcachedServiceProvider(), array('memcache.client' => 'mock'));
-        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app['memcache']);
-        $this->assertSame($logger, $app['memcache']->getLogger()->getLogger());
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => 'mock', 'memcache.enable_log' => true]);
+        $this->assertInstanceOf(MemcacheLoggingProxy::class, $app['memcache']);
+        $this->assertInstanceOf(MemcachedMock::class, $app['memcache']->getOriginalClient());
     }
 
     /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot find class "\\Foo\\Bar" to use as cache client.$#
+     * @requires extension memcached
      */
-    public function testExceptionMissingCustomClient()
+    public function testNoLoggerAtDefault()
     {
         $app = new Application();
-        $app->register(new MemcachedServiceProvider(), array('memcache.client' => '\Foo\Bar'));
-        $app['memcache']->getServerList();
+        $app['logger'] = false;
+        $app->register(new MemcachedServiceProvider());
+        $this->assertInstanceof(Memcached::class, $app['memcache']);
+        $this->assertSame('', $app['memcache']->getPrefix());
+    }
+
+    /**
+     * @requires extension memcached
+     */
+    public function testNoLoggerIfCustomLogger()
+    {
+        $app = new Application();
+        $app['logger'] = new \stdClass();
+        $app->register(new MemcachedServiceProvider());
+        $this->assertInstanceof(Memcached::class, $app['memcache']);
+        $this->assertSame('', $app['memcache']->getPrefix());
     }
 
     public function testServiceName()
@@ -171,20 +219,20 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $name1 = 'memcached';
         $prefix1 = 'prefix1';
         $service1 = new MemcachedServiceProvider($name1);
-        $app->register($service1, array($name1.'.client' => 'mock', $name1.'.prefix' => $prefix1));
+        $app->register($service1, [$name1.'.client' => 'mock', $name1.'.prefix' => $prefix1]);
 
         $name2 = 'cache';
         $prefix2 = 'prefix2';
         $service2 = new MemcachedServiceProvider($name2);
-        $app->register($service2, array($name2.'.client' => 'mock', $name2.'.prefix' => $prefix2));
+        $app->register($service2, [$name2.'.client' => 'mock', $name2.'.prefix' => $prefix2]);
 
         $this->assertFalse(isset($app['memcache']));
 
         $this->assertTrue(isset($app[$name1]));
-        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app[$name1]);
+        $this->assertInstanceOf(MemcachedMock::class, $app[$name1]);
 
         $this->assertTrue(isset($app[$name2]));
-        $this->assertInstanceOf('GeckoPackages\MemcacheMock\MemcachedMock', $app[$name2]);
+        $this->assertInstanceOf(MemcachedMock::class, $app[$name2]);
 
         $app[$name1]->set('foo', 'bar');
 
@@ -221,10 +269,22 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
     }
 }
 
-class CustomCacheClientTestClass
+/**
+ * @internal
+ *
+ * @author SpacePossum
+ */
+final class TestCustomCacheClient
 {
+    private $addServerCallCount = 0;
+
     public function addServer()
     {
-        //
+        ++$this->addServerCallCount;
+    }
+
+    public function getAddServerCallCount()
+    {
+        return $this->addServerCallCount;
     }
 }
