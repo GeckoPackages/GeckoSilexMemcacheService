@@ -43,18 +43,21 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $this->assertInternalType('array', $calls);
         $this->assertCount(4, $calls);
 
-        $this->assertSame('> addServer', $calls[0][0]);
+        $this->assertSame('> Memcached::addServer', $calls[0][0]);
 
         $this->assertSame(
             ['127.0.0.1', 11211],
             array_slice($calls[0][1], 0, 2, true)
         );
 
-        $this->assertSame('< addServer', $calls[1][0]);
+        $this->assertSame('< Memcached::addServer', $calls[1][0]);
         $this->assertTrue($calls[1][1][0]);
 
-        $this->assertSame('> setPrefix', $calls[2][0]);
+        $this->assertSame('> Memcached::setPrefix', $calls[2][0]);
         $this->assertSame([$name], $calls[2][1]);
+
+        $this->assertSame('< Memcached::setPrefix', $calls[3][0]);
+        $this->assertSame([true], $calls[3][1]);
 
         $logger->resetDebugLog();
 
@@ -62,9 +65,9 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
 
         $calls = $logger->getDebugLog();
         $this->assertCount(2, $calls);
-        $this->assertSame('> getOption', $calls[0][0]);
+        $this->assertSame('> Memcached::getOption', $calls[0][0]);
         $this->assertSame([\Memcached::OPT_PREFIX_KEY], $calls[0][1]);
-        $this->assertSame('< getOption', $calls[1][0]);
+        $this->assertSame('< Memcached::getOption', $calls[1][0]);
         $this->assertSame([$name], $calls[1][1]);
 
         $this->assertSame($name, $prefix);
