@@ -63,9 +63,9 @@ final class MemcacheLoggingProxy
     public function __call($name, array $arguments)
     {
         $this->stopwatch->start($this->name, $name);
-        $this->logger->debug('> '.$name, $arguments);
+        $this->logger->debug('> '.$this->name.'::'.$name, $arguments);
         $r = call_user_func_array([$this->originalClient, $name], $arguments);
-        $this->logger->debug('< '.$name, [$r]);
+        $this->logger->debug('< '.$this->name.'::'.$name, [$r]);
         $this->stopwatch->stop($this->name);
 
         return $r;
