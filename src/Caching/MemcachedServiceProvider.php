@@ -11,12 +11,11 @@
 
 namespace GeckoPackages\Silex\Services\Caching;
 
-use GeckoPackages\MemcacheMock\MemcachedLogger;
-use GeckoPackages\MemcacheMock\MemcachedMock;
 use GeckoPackages\Silex\Services\Caching\Clients\Memcached;
-use GeckoPackages\Silex\Services\Caching\Clients\MemcachedLogging;
+use GeckoPackages\Silex\Services\Caching\Clients\MemcacheLoggingProxy;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
+use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  * Service for using Memcache.
@@ -46,7 +45,7 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
     public function register(Container $app)
     {
         $name = $this->name;
-        $app[$name] = function ($app) use($name) {
+        $app[$name] = function ($app) use ($name) {
             $memcache = isset($app[$name.'.client']) ? $app[$name.'.client'] : 'memcached';
             switch ($memcache) {
                 case 'memcached':
@@ -54,28 +53,28 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                         throw new \RuntimeException('Cannot find class "Memcached".');
                     }
 
-                    if (empty($app['logger'])) {
-                        $memcache = new Memcached();
-                    } else {
-                        $memcache = new MemcachedLogging();
-                        $memcache->setLogger(new MemcachedLogger($app['logger'], isset($app['stopwatch']) ? $app['stopwatch'] : null));
-                    }
+                    $memcache = new Memcached();
 
                     break;
                 case 'mock':
-                    $memcache = new MemcachedMock();
-                    if (!empty($app['logger'])) {
-                        $memcache->setLogger(new MemcachedLogger($app['logger'], isset($app['stopwatch']) ? $app['stopwatch'] : null));
-                    }
+                    $memcache = new \GeckoPackages\MemcacheMock\MemcachedMock();
 
                     break;
                 default:
                     if (!class_exists($memcache)) {
-                        throw new \UnexpectedValueException(sprintf('Cannot find class "%s" to use as cache client.', $memcache));
+                        throw new \UnexpectedValueException(sprintf('Cannot find class "%s" to use as memcache client.', $memcache));
                     }
 
                     $memcache = new $memcache();
                     break;
+            }
+
+            if ($this->shouldLog($app, $this->name)) {
+                $memcache = new MemcacheLoggingProxy(
+                    $memcache,
+                    $app['logger'],
+                    class_exists('Symfony\Component\Stopwatch\Stopwatch') && isset($app['stopwatch']) && $app['stopwatch'] instanceof Stopwatch ? $app['stopwatch'] : null
+                );
             }
 
             if (isset($app[$name.'.servers'])) {
@@ -96,5 +95,22 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
 
             return $memcache;
         };
+    }
+
+    /**
+     * @param Container $app
+     * @param string    $name
+     *
+     * @return bool
+     */
+    private function shouldLog(Container $app, $name)
+    {
+        return
+            isset($app[$name.'.enable_log'])
+            && true === isset($app[$name.'.enable_log'])
+            && !empty($app['logger'])
+            && interface_exists('Psr\Log\LoggerInterface')
+            && $app['logger'] instanceof \Psr\Log\LoggerInterface
+        ;
     }
 }
