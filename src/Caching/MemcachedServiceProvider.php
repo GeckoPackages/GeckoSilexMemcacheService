@@ -78,7 +78,7 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
             }
 
             if (isset($app[$name.'.servers'])) {
-                    foreach ($app[$name.'.servers'] as $server) {
+                foreach ($app[$name.'.servers'] as $server) {
                     if (count($server) === 1) {
                         $server[1] = 11211; // use default port
                     }
