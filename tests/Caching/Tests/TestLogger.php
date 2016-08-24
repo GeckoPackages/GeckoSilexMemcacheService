@@ -48,7 +48,6 @@ final class TestLogger implements LoggerInterface
      */
     public function error($message, array $context = [])
     {
-        $this->errorLog[] = [$message, $context];
     }
 
     /**

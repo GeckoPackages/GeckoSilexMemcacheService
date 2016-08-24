@@ -11,6 +11,7 @@
 
 namespace GeckoPackages\Silex\Services\Caching\Clients;
 
+use GeckoPackages\Silex\Services\Caching\NullStopWatch;
 use Psr\Log\LoggerInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
@@ -95,6 +96,8 @@ final class MemcacheLoggingProxy
         if ($this->originalClient instanceof Memcached) {
             return $this->__call('getPrefix', []);
         }
+
+        return false;
     }
 
     /**
@@ -107,5 +110,7 @@ final class MemcacheLoggingProxy
         if ($this->originalClient instanceof Memcached) {
             return $this->__call('setPrefix', [$prefix]);
         }
+
+        return false;
     }
 }
