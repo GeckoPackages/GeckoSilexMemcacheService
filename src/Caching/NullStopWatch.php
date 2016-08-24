@@ -9,17 +9,15 @@
  * with this source code in the file LICENSE.
  */
 
-namespace GeckoPackages\Silex\Services\Caching\Clients;
+namespace GeckoPackages\Silex\Services\Caching;
 
 final class NullStopWatch
 {
     public function start($name, $category = null)
     {
-        //
     }
 
     public function stop($name)
     {
-        //
     }
 }
