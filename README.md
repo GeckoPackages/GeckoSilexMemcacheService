@@ -8,7 +8,7 @@ For Silex 1.x please see the 1.0 branch.
 
 ### Requirements
 
-PHP 5.5.9 (PHP7 supported)
+PHP 5.5.9 (PHP7 supported). Optional HHVM support >= 3.9.
 
 ### Install
 
