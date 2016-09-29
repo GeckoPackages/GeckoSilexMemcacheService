@@ -70,8 +70,7 @@ The service takes the following options:
 
 ### Logger sample
 
-Logging calls to the service can be done when a [PSR3](https://github.com/php-fig/log/blob/master/Psr/Log/LoggerInterface.php) logger is set on the container (`$app['logger']`). 
-Enable logging by passing the `memcache.enable_log` configuration option.
+Logging calls to the service can be done when a [PSR3](https://github.com/php-fig/log/blob/master/Psr/Log/LoggerInterface.php) logger is set on the container (`$app['logger']`) or injected via the config. Enable logging by passing the `memcache.enable_log` configuration option.
 
 Example:
 ```php
@@ -84,6 +83,18 @@ $logger = $app['memcache']->getLogger();
 // returns '$myPSR3Logger'
 $logger->getLogger();
 ```
+
+Or via the config: 
+```php
+$app['logger'] = $myPSR3Logger;
+$app->register(
+    new MemcachedServiceProvider(), [
+        'memcache.enable_log' => true,
+        'memcache.logger' => $myPSR3Logger;
+    ]
+);
+```
+ 
 Note:
 Because internally the `memcache` client is wrapped its public methods are still available. 
 However calls like `method_exists` might fail. To get the original client that is in use call `getOriginalClient` on the proxy client.
