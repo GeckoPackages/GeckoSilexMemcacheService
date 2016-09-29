@@ -107,7 +107,7 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
     {
         return
             isset($app[$name.'.enable_log'])
-            && true === isset($app[$name.'.enable_log'])
+            && true === $app[$name.'.enable_log']
             && !empty($app['logger'])
             && interface_exists('Psr\Log\LoggerInterface')
             && $app['logger'] instanceof \Psr\Log\LoggerInterface
