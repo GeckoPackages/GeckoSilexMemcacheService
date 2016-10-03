@@ -134,17 +134,22 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @param bool  $expected
+     * @param bool  $setAppLogger
      * @param array $configuration
      *
      * @requires extension memcached
      * @dataProvider provideLoggerByConfiguration
      */
-    public function testLoggerByConfiguration($expected, array $configuration)
+    public function testLoggerByConfiguration($setAppLogger, $expected, array $configuration)
     {
-        $logger = new TestLogger();
         $app = new Application();
-        $app['logger'] = $logger;
+        if ($setAppLogger) {
+            $logger = new TestLogger();
+            $app['logger'] = $logger;
+        }
+
         $app->register(new MemcachedServiceProvider(), $configuration);
+
         if ($expected) {
             $this->assertInstanceOf(MemcacheLoggingProxy::class, $app['memcache']);
             $this->assertInstanceOf(MemcachedMock::class, $app['memcache']->getOriginalClient());
@@ -157,9 +162,50 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
     public function provideLoggerByConfiguration()
     {
         return [
-            [false, ['memcache.client' => 'mock']],
-            [true, ['memcache.client' => 'mock', 'memcache.enable_log' => false]],
-            [true, ['memcache.client' => 'mock', 'memcache.enable_log' => true]],
+            // add logger to $app['logger'] before testing
+            [true, false, ['memcache.client' => 'mock']],
+            [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => false]],
+            [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => true]],
+            [true, false, ['memcache.client' => 'mock', 'memcache.logger' => new TestLogger()]],
+
+            // do not addd logger to $app['logger'] before testing
+            [false, false, ['memcache.client' => 'mock', 'memcache.logger' => new TestLogger()]],
+            [
+                false,
+                true,
+                [
+                    'memcache.client' => 'mock',
+                    'memcache.enable_log' => false,
+                    'memcache.logger' => new TestLogger(),
+                ],
+            ],
+            [
+                false,
+                true,
+                [
+                    'memcache.client' => 'mock',
+                    'memcache.enable_log' => true,
+                    'memcache.logger' => new TestLogger(),
+                ],
+            ],
+            [
+                true,
+                true,
+                [
+                    'memcache.client' => 'mock',
+                    'memcache.enable_log' => true,
+                    'memcache.logger' => new TestLogger(),
+                ],
+            ],
+            [
+                false,
+                false,
+                [
+                    'memcache.client' => 'mock',
+                    'memcache.enable_log' => true,
+                    'memcache.logger' => new \stdClass(),
+                ],
+            ],
         ];
     }
 

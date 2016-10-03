@@ -15,6 +15,7 @@ use GeckoPackages\Silex\Services\Caching\Clients\Memcached;
 use GeckoPackages\Silex\Services\Caching\Clients\MemcacheLoggingProxy;
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
+use Psr\Log\LoggerInterface;
 use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
@@ -69,11 +70,11 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                     break;
             }
 
-            if ($this->shouldLog($app, $this->name)) {
+            if (null !== $logger = $this->getLogger($app, $name)) {
                 $memcache = new MemcacheLoggingProxy(
                     $memcache,
-                    $app['logger'],
-                    class_exists('Symfony\Component\Stopwatch\Stopwatch') && isset($app['stopwatch']) && $app['stopwatch'] instanceof Stopwatch ? $app['stopwatch'] : null
+                    $logger,
+                    isset($app['stopwatch']) && class_exists('Symfony\Component\Stopwatch\Stopwatch') && $app['stopwatch'] instanceof Stopwatch ? $app['stopwatch'] : null
                 );
             }
 
@@ -101,15 +102,21 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
      * @param Container $app
      * @param string    $name
      *
-     * @return bool
+     * @return LoggerInterface|null
      */
-    private function shouldLog(Container $app, $name)
+    private function getLogger(Container $app, $name)
     {
-        return
-            isset($app[$name.'.enable_log'])
-            && !empty($app['logger'])
-            && interface_exists('Psr\Log\LoggerInterface')
-            && $app['logger'] instanceof \Psr\Log\LoggerInterface
-        ;
+        if (!isset($app[$name.'.enable_log']) || !interface_exists('Psr\Log\LoggerInterface')) {
+            return null;
+        }
+
+        $logger = null;
+        if (isset($app['memcache.logger'])) {
+            $logger = $app['memcache.logger'];
+        } elseif (!empty($app['logger'])) {
+            $logger = $app['logger'];
+        }
+
+        return $logger instanceof LoggerInterface ? $logger : null;
     }
 }
