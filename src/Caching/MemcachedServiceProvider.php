@@ -70,12 +70,11 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                     break;
             }
 
-            $logger = $this->getLogger($app, $name);
-            if ($logger) {
+            if (null !== $logger = $this->getLogger($app, $name)) {
                 $memcache = new MemcacheLoggingProxy(
                     $memcache,
                     $logger,
-                    class_exists('Symfony\Component\Stopwatch\Stopwatch') && isset($app['stopwatch']) && $app['stopwatch'] instanceof Stopwatch ? $app['stopwatch'] : null
+                    isset($app['stopwatch']) && class_exists('Symfony\Component\Stopwatch\Stopwatch') && $app['stopwatch'] instanceof Stopwatch ? $app['stopwatch'] : null
                 );
             }
 
@@ -107,17 +106,17 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
      */
     private function getLogger(Container $app, $name)
     {
+        if (!isset($app[$name.'.enable_log']) || !interface_exists('Psr\Log\LoggerInterface')) {
+            return null;
+        }
+
         $logger = null;
         if (isset($app['memcache.logger'])) {
             $logger = $app['memcache.logger'];
         } elseif (!empty($app['logger'])) {
             $logger = $app['logger'];
         }
-        return (
-            $logger
-            && isset($app[$name.'.enable_log'])
-            && interface_exists('Psr\Log\LoggerInterface')
-            && $logger instanceof LoggerInterface
-        ) ? $logger : null;
+
+        return $logger instanceof LoggerInterface ? $logger : null;
     }
 }
