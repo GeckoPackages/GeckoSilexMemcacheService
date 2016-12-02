@@ -11,6 +11,11 @@
 
 namespace GeckoPackages\Silex\Services\Caching;
 
+/**
+ * @internal
+ *
+ * @author SpacePossum
+ */
 final class NullStopWatch
 {
     public function start($name, $category = null)
