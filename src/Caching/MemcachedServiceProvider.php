@@ -47,32 +47,35 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
     {
         $name = $this->name;
         $app[$name] = function ($app) use ($name) {
-            $memcache = isset($app[$name.'.client']) ? $app[$name.'.client'] : 'memcached';
-            switch ($memcache) {
+            $client = isset($app[$name.'.client']) ? $app[$name.'.client'] : 'memcached';
+            switch ($client) {
                 case 'memcached':
                     if (!class_exists('Memcached')) {
                         throw new \RuntimeException('Cannot find class "Memcached".');
                     }
 
-                    $memcache = new Memcached();
+                    $client = new Memcached();
 
                     break;
                 case 'mock':
-                    $memcache = new \GeckoPackages\MemcacheMock\MemcachedMock();
+                    $client = new \GeckoPackages\MemcacheMock\MemcachedMock();
 
                     break;
                 default:
-                    if (!class_exists($memcache)) {
-                        throw new \UnexpectedValueException(sprintf('Cannot find class "%s" to use as memcache client.', $memcache));
+                    if (!is_string($client) || !class_exists($client)) {
+                        throw new \UnexpectedValueException(sprintf(
+                            'Cannot use %s as class for memcache client.',
+                            is_object($client) ? get_class($client) : gettype($client).(is_resource($client) || null === $client ? '' : '#"'.$client.'"')
+                        ));
                     }
 
-                    $memcache = new $memcache();
+                    $client = new $client();
                     break;
             }
 
             if (null !== $logger = $this->getLogger($app, $name)) {
-                $memcache = new MemcacheLoggingProxy(
-                    $memcache,
+                $client = new MemcacheLoggingProxy(
+                    $client,
                     $logger,
                     isset($app['stopwatch']) && class_exists('Symfony\Component\Stopwatch\Stopwatch') && $app['stopwatch'] instanceof Stopwatch ? $app['stopwatch'] : null
                 );
@@ -84,17 +87,17 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                         $server[1] = 11211; // use default port
                     }
 
-                    $memcache->addServer($server[0], (int) $server[1]);
+                    $client->addServer($server[0], (int) $server[1]);
                 }
             } else {
-                $memcache->addServer('127.0.0.1', 11211);
+                $client->addServer('127.0.0.1', 11211);
             }
 
-            if (isset($app[$name.'.prefix']) && method_exists($memcache, 'setPrefix')) {
-                $memcache->setPrefix($app[$name.'.prefix']);
+            if (isset($app[$name.'.prefix']) && method_exists($client, 'setPrefix')) {
+                $client->setPrefix($app[$name.'.prefix']);
             }
 
-            return $memcache;
+            return $client;
         };
     }
 
