@@ -70,6 +70,7 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
                     }
 
                     $client = new $client();
+
                     break;
             }
 
@@ -109,7 +110,15 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
      */
     private function getLogger(Container $app, $name)
     {
-        if (!isset($app[$name.'.enable_log']) || !interface_exists('Psr\Log\LoggerInterface')) {
+        if (!isset($app[$name.'.enable_log'])) {
+            return null;
+        }
+
+        if (!is_bool($app[$name.'.enable_log'])) {
+            @trigger_error(sprintf('Using a non-boolean value for \'%s.enable_log\' is deprecated and will be removed in v4.0.', $name), E_USER_DEPRECATED);
+        }
+
+        if (!interface_exists('Psr\Log\LoggerInterface')) {
             return null;
         }
 

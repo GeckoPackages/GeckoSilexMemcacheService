@@ -212,6 +212,19 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
+     * @group legacy
+     */
+    public function testDeprecatedConfig()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), [
+            'memcache.enable_log' => null,
+            'memcache.client' => 'mock',
+        ]);
+        $app['memcache']->setPrefix('1');
+    }
+
+    /**
      * @expectedException \UnexpectedValueException
      * @expectedExceptionMessageRegExp #^Cannot use string\#"\\Foo\\Bar" as class for memcache client.$#
      */
