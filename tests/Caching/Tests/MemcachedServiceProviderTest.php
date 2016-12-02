@@ -165,15 +165,24 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         return [
             // add logger to $app['logger'] before testing
             [true, false, ['memcache.client' => 'mock']],
-            [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => false]],
+            [true, false, ['memcache.client' => 'mock', 'memcache.enable_log' => false]],
             [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => true]],
             [true, false, ['test.client' => 'mock', 'test.logger' => new TestLogger()], 'test'],
 
             // do not add logger to $app['logger'] before testing
             [false, false, ['memcache.client' => 'mock', 'memcache.logger' => new TestLogger()]],
             [
-                false,
                 true,
+                true,
+                [
+                    'memcache.client' => 'mock',
+                    'memcache.enable_log' => true,
+                    'memcache.logger' => new TestLogger(),
+                ],
+            ],
+            [
+                false,
+                false,
                 [
                     'memcache.client' => 'mock',
                     'memcache.enable_log' => false,
@@ -189,15 +198,6 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
                     'test.logger' => new TestLogger(),
                 ],
                 'test',
-            ],
-            [
-                true,
-                true,
-                [
-                    'memcache.client' => 'mock',
-                    'memcache.enable_log' => true,
-                    'memcache.logger' => new TestLogger(),
-                ],
             ],
             [
                 false,
