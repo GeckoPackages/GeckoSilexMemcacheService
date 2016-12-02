@@ -169,7 +169,7 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
             [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => true]],
             [true, false, ['test.client' => 'mock', 'test.logger' => new TestLogger()], 'test'],
 
-            // do not addd logger to $app['logger'] before testing
+            // do not add logger to $app['logger'] before testing
             [false, false, ['memcache.client' => 'mock', 'memcache.logger' => new TestLogger()]],
             [
                 false,
@@ -213,12 +213,45 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot find class "\\Foo\\Bar" to use as memcache client.$#
+     * @expectedExceptionMessageRegExp #^Cannot use string\#"\\Foo\\Bar" as class for memcache client.$#
      */
     public function testExceptionMissingCustomClient()
     {
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => '\Foo\Bar']);
+        $app['memcache']->getServerList();
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot use NULL as class for memcache client.$#
+     */
+    public function testExceptionMissingCustomClientNull()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => null]);
+        $app['memcache']->getServerList();
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot use stdClass as class for memcache client.$#
+     */
+    public function testExceptionMissingCustomClientStd()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => new \stdClass()]);
+        $app['memcache']->getServerList();
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot use integer\#"123" as class for memcache client.$#
+     */
+    public function testExceptionMissingCustomClientInt()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => 123]);
         $app['memcache']->getServerList();
     }
 
