@@ -111,8 +111,8 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
         }
 
         $logger = null;
-        if (isset($app['memcache.logger'])) {
-            $logger = $app['memcache.logger'];
+        if (isset($app[$name.'.logger'])) {
+            $logger = $app[$name.'.logger'];
         } elseif (!empty($app['logger'])) {
             $logger = $app['logger'];
         }
