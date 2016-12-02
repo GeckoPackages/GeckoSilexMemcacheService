@@ -133,14 +133,15 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
     }
 
     /**
-     * @param bool  $expected
-     * @param bool  $setAppLogger
-     * @param array $configuration
+     * @param bool   $expected
+     * @param bool   $setAppLogger
+     * @param array  $configuration
+     * @param string $serviceName
      *
      * @requires extension memcached
      * @dataProvider provideLoggerByConfiguration
      */
-    public function testLoggerByConfiguration($setAppLogger, $expected, array $configuration)
+    public function testLoggerByConfiguration($setAppLogger, $expected, array $configuration, $serviceName = 'memcache')
     {
         $app = new Application();
         if ($setAppLogger) {
@@ -148,14 +149,14 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
             $app['logger'] = $logger;
         }
 
-        $app->register(new MemcachedServiceProvider(), $configuration);
+        $app->register(new MemcachedServiceProvider($serviceName), $configuration);
 
         if ($expected) {
-            $this->assertInstanceOf(MemcacheLoggingProxy::class, $app['memcache']);
-            $this->assertInstanceOf(MemcachedMock::class, $app['memcache']->getOriginalClient());
+            $this->assertInstanceOf(MemcacheLoggingProxy::class, $app[$serviceName]);
+            $this->assertInstanceOf(MemcachedMock::class, $app[$serviceName]->getOriginalClient());
         } else {
-            $this->assertInstanceOf(MemcachedMock::class, $app['memcache']);
-            $this->assertNull($app['memcache']->getLogger());
+            $this->assertInstanceOf(MemcachedMock::class, $app[$serviceName]);
+            $this->assertNull($app[$serviceName]->getLogger());
         }
     }
 
@@ -166,9 +167,9 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
             [true, false, ['memcache.client' => 'mock']],
             [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => false]],
             [true, true, ['memcache.client' => 'mock', 'memcache.enable_log' => true]],
-            [true, false, ['memcache.client' => 'mock', 'memcache.logger' => new TestLogger()]],
+            [true, false, ['test.client' => 'mock', 'test.logger' => new TestLogger()], 'test'],
 
-            // do not addd logger to $app['logger'] before testing
+            // do not add logger to $app['logger'] before testing
             [false, false, ['memcache.client' => 'mock', 'memcache.logger' => new TestLogger()]],
             [
                 false,
@@ -183,10 +184,11 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
                 false,
                 true,
                 [
-                    'memcache.client' => 'mock',
-                    'memcache.enable_log' => true,
-                    'memcache.logger' => new TestLogger(),
+                    'test.client' => 'mock',
+                    'test.enable_log' => true,
+                    'test.logger' => new TestLogger(),
                 ],
+                'test',
             ],
             [
                 true,
@@ -211,12 +213,45 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
 
     /**
      * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot find class "\\Foo\\Bar" to use as memcache client.$#
+     * @expectedExceptionMessageRegExp #^Cannot use string\#"\\Foo\\Bar" as class for memcache client.$#
      */
     public function testExceptionMissingCustomClient()
     {
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => '\Foo\Bar']);
+        $app['memcache']->getServerList();
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot use NULL as class for memcache client.$#
+     */
+    public function testExceptionMissingCustomClientNull()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => null]);
+        $app['memcache']->getServerList();
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot use stdClass as class for memcache client.$#
+     */
+    public function testExceptionMissingCustomClientStd()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => new \stdClass()]);
+        $app['memcache']->getServerList();
+    }
+
+    /**
+     * @expectedException \UnexpectedValueException
+     * @expectedExceptionMessageRegExp #^Cannot use integer\#"123" as class for memcache client.$#
+     */
+    public function testExceptionMissingCustomClientInt()
+    {
+        $app = new Application();
+        $app->register(new MemcachedServiceProvider(), ['memcache.client' => 123]);
         $app['memcache']->getServerList();
     }
 
