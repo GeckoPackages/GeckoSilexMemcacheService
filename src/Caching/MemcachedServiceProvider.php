@@ -109,7 +109,7 @@ final class MemcachedServiceProvider implements ServiceProviderInterface
      */
     private function getLogger(Container $app, $name)
     {
-        if (!isset($app[$name.'.enable_log']) || !interface_exists('Psr\Log\LoggerInterface')) {
+        if (!isset($app[$name.'.enable_log']) || true !== $app[$name.'.enable_log'] || !interface_exists('Psr\Log\LoggerInterface')) {
             return null;
         }
 
