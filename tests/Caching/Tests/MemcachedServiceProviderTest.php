@@ -217,7 +217,7 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
     public function testExceptionMissingCustomClient()
     {
         $this->expectException(\UnexpectedValueException::class);
-        $this->expectExceptionMessageRegExp('#^Cannot use string\#"\\Foo\\Bar" as class for memcache client.$#');
+        $this->expectExceptionMessageRegExp('#^Cannot use string\#"\\\Foo\\\Bar" as class for memcache client.$#');
 
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => '\Foo\Bar']);
