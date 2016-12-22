@@ -16,8 +16,6 @@ use GeckoPackages\Silex\Services\Caching\MemcachedServiceProvider;
 use Silex\Application;
 
 /**
- * @requires PHPUnit 5.2
- *
  * @internal
  *
  * @author SpacePossum
@@ -214,6 +212,9 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testExceptionMissingCustomClient()
     {
         $this->expectException(\UnexpectedValueException::class);
@@ -224,6 +225,9 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app['memcache']->getServerList();
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testExceptionMissingCustomClientNull()
     {
         $this->expectException(\UnexpectedValueException::class);
@@ -234,6 +238,9 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app['memcache']->getServerList();
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testExceptionMissingCustomClientStd()
     {
         $this->expectException(\UnexpectedValueException::class);
@@ -244,6 +251,9 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         $app['memcache']->getServerList();
     }
 
+    /**
+     * @requires PHPUnit 5.2
+     */
     public function testExceptionMissingCustomClientInt()
     {
         $this->expectException(\UnexpectedValueException::class);
