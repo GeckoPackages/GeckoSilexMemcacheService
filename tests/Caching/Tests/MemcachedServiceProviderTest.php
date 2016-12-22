@@ -16,6 +16,8 @@ use GeckoPackages\Silex\Services\Caching\MemcachedServiceProvider;
 use Silex\Application;
 
 /**
+ * @requires PHPUnit 5.2
+ *
  * @internal
  *
  * @author SpacePossum
@@ -139,6 +141,7 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
      * @param string $serviceName
      *
      * @requires extension memcached
+     *
      * @dataProvider provideLoggerByConfiguration
      */
     public function testLoggerByConfiguration($setAppLogger, $expected, array $configuration, $serviceName = 'memcache')
@@ -211,45 +214,41 @@ final class MemcachedServiceProviderTest extends \PHPUnit_Framework_TestCase
         ];
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot use string\#"\\Foo\\Bar" as class for memcache client.$#
-     */
     public function testExceptionMissingCustomClient()
     {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Cannot use string\#"\\Foo\\Bar" as class for memcache client.$#');
+
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => '\Foo\Bar']);
         $app['memcache']->getServerList();
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot use NULL as class for memcache client.$#
-     */
     public function testExceptionMissingCustomClientNull()
     {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Cannot use NULL as class for memcache client.$#');
+
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => null]);
         $app['memcache']->getServerList();
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot use stdClass as class for memcache client.$#
-     */
     public function testExceptionMissingCustomClientStd()
     {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Cannot use stdClass as class for memcache client.$#');
+
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => new \stdClass()]);
         $app['memcache']->getServerList();
     }
 
-    /**
-     * @expectedException \UnexpectedValueException
-     * @expectedExceptionMessageRegExp #^Cannot use integer\#"123" as class for memcache client.$#
-     */
     public function testExceptionMissingCustomClientInt()
     {
+        $this->expectException(\UnexpectedValueException::class);
+        $this->expectExceptionMessageRegExp('#^Cannot use integer\#"123" as class for memcache client.$#');
+
         $app = new Application();
         $app->register(new MemcachedServiceProvider(), ['memcache.client' => 123]);
         $app['memcache']->getServerList();

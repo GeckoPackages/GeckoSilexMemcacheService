@@ -17,6 +17,8 @@ use Symfony\Component\Stopwatch\Stopwatch;
 
 /**
  *  @internal
+ *
+ * @author SpacePossum
  */
 final class MemcacheLoggingProxy
 {
