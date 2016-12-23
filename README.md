@@ -20,7 +20,7 @@ Add the package to your `composer.json`.
 }
 ```
 
-<sub>Note: For Silex 1.x please see the 1.0 branch, use `^1.*`.</sub>
+<sub>Note: For Silex 1.x please see the 1.0 branch, use `^1.0`.</sub>
 
 ## Example
 
