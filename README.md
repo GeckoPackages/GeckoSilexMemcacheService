@@ -16,7 +16,7 @@ Add the package to your `composer.json`.
 
 ```
 "require": {
-    "gecko-packages/gecko-silex-caching-service" : "1.*"
+    "gecko-packages/gecko-silex-caching-service" : "^1.0"
 }
 ```
 
